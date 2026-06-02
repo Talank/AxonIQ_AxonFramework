@@ -1,0 +1,107 @@
+= Defining Transformations
+:navtitle: Defining transformations
+
+A transformation is built with the `EventTransformation` factory.
+You name the event identity it matches (`from`), the identity it produces (`to`), and a mapper that rewrites the payload.
+
+== A single transformation
+
+This transformation lifts a v1 `CoursePublished` — which stored a single `capacity` field — into the v2 shape that carries `minCapacity` and `maxCapacity`:
+
+[source,java]
+----
+public final class CoursePublishedV1ToV2 {
+
+    private static final MessageType FROM = new MessageType("coursecatalog.CoursePublished", "1.0.0");
+    private static final MessageType TO   = new MessageType("coursecatalog.CoursePublished", "2.0.0");
+
+    public static EventTransformer build() {
+        return EventTransformation.from(FROM)
+                                  .to(TO)
+                                  .transform(JsonNode.class, CoursePublishedV1ToV2::map);
+    }
+
+    private static JsonNode map(JsonNode v1, @Nullable ProcessingContext context) {
+        int capacity = v1.get("capacity").asInt();
+        ObjectNode v2 = JsonNodeFactory.instance.objectNode();
+        v2.set("catalogId", v1.get("catalogId"));
+        v2.set("courseId",  v1.get("courseId"));
+        v2.set("name",      v1.get("name"));
+        v2.put("minCapacity", capacity);
+        v2.put("maxCapacity", capacity);
+        return v2;
+    }
+}
+----
+
+Reading it step by step:
+
+* `from(...)` matches the stored event identity by its `MessageType` — a qualified name plus a version. Only events with this exact identity are passed to the mapper.
+* `to(...)` declares the identity of the event the mapper produces. It must keep the same qualified name as `from`; only the version may change.
+* `transform(JsonNode.class, mapper)` converts the stored payload to a `JsonNode` before calling your mapper, which returns the new payload. The `ProcessingContext` is available for read-only context and may be `null`.
+
+[NOTE]
+The `JsonNode` used here is the Jackson 3 type (`tools.jackson.databind.JsonNode`), the same representation Axon Framework's default converter works with.
+
+[IMPORTANT]
+.Renaming an event is not supported
+====
+A transformation may change an event's _version_ and _payload_, but not its qualified name.
+The `to` identity must share the qualified name of `from`.
+
+If they differ, the chain raises a `ChainConfigurationException`:
+
+* with a concrete `from`, the mismatch is detected when the chain is built, so the failure surfaces at startup;
+* with a <<_matching_multiple_event_versions,predicate `from`>>, a match can only be resolved per event, so the failure surfaces when such an event is read.
+
+Keep the same qualified name on both sides and change only the version.
+====
+
+== Working with generic payloads
+
+`transform(Class<T>, ...)` works for any non-generic type.
+When the type you want carries type parameters — such as `Map<String, Object>` or `List<...>` — use the `TypeReference` overload so the generic information is preserved:
+
+[source,java]
+----
+private static final TypeReference<Map<String, Object>> INPUT_TYPE = new TypeReference<>() {
+};
+
+public static EventTransformer build() {
+    return EventTransformation.from(FROM)
+                              .to(TO)
+                              .transform(INPUT_TYPE, StudentRegisteredV1ToV2::map);
+}
+
+private static Map<String, Object> map(Map<String, Object> v1, @Nullable ProcessingContext context) {
+    Map<String, Object> v2 = new LinkedHashMap<>();
+    v2.put("catalogId", v1.get("catalogId"));
+    v2.put("studentId", v1.get("studentId"));
+    v2.put("fullName", combine(v1.get("firstName"), v1.get("lastName")));
+    return v2;
+}
+----
+
+This v1-to-v2 `StudentRegistered` transformation combines the separate `firstName` and `lastName` fields into a single `fullName`.
+
+[#_matching_multiple_event_versions]
+== Matching multiple event versions
+
+Sometimes one rule should apply to a _range_ of stored identities rather than a single one.
+Instead of a concrete `MessageType`, pass a predicate to `from(...)`:
+
+[source,java]
+----
+private static final Predicate<MessageType> FROM_PREDICATE =
+        type -> "coursecatalog.WelcomeMessageSent".equals(type.qualifiedName().name())
+                && type.version().startsWith("0.");
+
+public static EventTransformer build() {
+    return EventTransformation.from(FROM_PREDICATE)
+                              .to(new MessageType("coursecatalog.WelcomeMessageSent", "1.0.0"))
+                              .transform(JsonNode.class, WelcomeMessageBetaCleanup::map);
+}
+----
+
+This single transformer folds every `0.x` beta version of `WelcomeMessageSent` up to `1.0.0`, instead of registering one transformer per beta version.
+Keep the predicate's matched names aligned with the `to` identity's name, since renaming an event is not supported.
