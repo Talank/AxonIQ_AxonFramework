@@ -30,8 +30,7 @@ import tools.jackson.databind.node.JsonNodeFactory;
 
 import java.util.concurrent.CompletionException;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Event renaming (a qualified-name change) is not supported; only a same-name
@@ -71,9 +70,9 @@ class RenameRejectedTest {
                                        .transform(JsonNode.class, (node, ctx) -> node);
 
             // when / then: registration and build succeed without throwing
-            EventTransformerChain.builder()
-                                 .register(structuralUpcast)
-                                 .build();
+            assertThatNoException().isThrownBy(() -> EventTransformerChain.builder()
+                                                                          .register(structuralUpcast)
+                                                                          .build());
         }
     }
 
