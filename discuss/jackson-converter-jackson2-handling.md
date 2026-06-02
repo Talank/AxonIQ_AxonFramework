@@ -19,9 +19,11 @@ behave correctly in isolation; they don't compose.
 ## What we chose: Option 1 — fail loud
 
 A defensive check at the top of `convert(...)` detects Jackson 2 `JsonNode` inputs by
-walking the class hierarchy for the fully-qualified name
-`com.fasterxml.jackson.databind.JsonNode`. When found, the converter throws a
-`ConversionException` with a clear remediation hint instead of running the broken
+resolving `com.fasterxml.jackson.databind.JsonNode` through the input type's own class
+loader (so this class keeps no compile-time dependency on Jackson 2) and testing
+assignability. The per-type answer is cached in a `ClassValue`, so the lookup runs at
+most once per input class. When the input is a Jackson 2 tree node, the converter throws
+a `ConversionException` with a clear remediation hint instead of running the broken
 conversion path.
 
 ```java
@@ -82,31 +84,3 @@ footguns; most users discover the wrong-output behavior before they read the Jav
 - Doesn't catch other foreign tree types (Gson `JsonElement`, etc.). Only Jackson 2's
   `JsonNode`, because that's the one we hit and the only one in widespread Java JSON use
   today that overlaps with Jackson 3's adoption window.
-
-## Open question (decoupled from this fix)
-
-> Does the team want to ship official Jackson 2 support in AF5?
-
-Jackson 3 adoption will take years across the ecosystem. Most users with established
-codebases will be on Jackson 2 for the foreseeable future. AF5's default
-`JacksonConverter` not supporting Jackson 2 means anyone using both libraries (e.g. their
-own code uses Jackson 2, the framework uses Jackson 3) has to bridge by hand.
-
-Options if the answer is "yes":
-- Ship `axon-conversion-jackson2` as a sibling artifact (Option 3 above).
-- Provide adapter helpers in the docs (`Jackson2Bridge.toJackson3(node)`).
-- Make the default `Converter` registration smart enough to pick the right one based on
-  classpath detection.
-
-This question is **explicitly out of scope** for the current fix. The fix is correct
-regardless of which answer the team picks here; ship the fix, then decide.
-
-## Status
-
-- **Code**: `conversion/src/main/java/org/axonframework/conversion/jackson/JacksonConverter.java`
-  - Detection helper: `isForeignJacksonTreeNode(Class<?>)`
-  - Guard: lines after the identity-conversion early-return, before any conversion logic.
-- **Test**: `conversion/src/test/java/org/axonframework/conversion/jackson/JacksonConverterTest.java`
-  - `convertRefusesJackson2TreeNodeRatherThanSilentlyIntrospectingItAsAPojo`
-- **Verified**: 32 tests pass with the fix; the new test fails (as expected) when the
-  guard is removed.
