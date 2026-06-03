@@ -6,7 +6,8 @@ You name the event identity it matches (`from`), the identity it produces (`to`)
 
 == A single transformation
 
-This transformation lifts a v1 `CoursePublished` — which stored a single `capacity` field — into the v2 shape that carries `minCapacity` and `maxCapacity`:
+A v1 `CoursePublished` stored a single `capacity` field.
+This transformation lifts it into the v2 shape that carries `minCapacity` and `maxCapacity`:
 
 [source,java]
 ----
@@ -33,10 +34,10 @@ public final class CoursePublishedV1ToV2 {
     }
 }
 ----
-<1> `from(...)` matches the stored event identity by its `MessageType` — a qualified name plus a version. Only events with this exact identity are passed to the mapper.
+<1> `from(...)` matches the stored event identity by its `MessageType`, a qualified name plus a version. Only events with this exact identity are passed to the mapper.
 <2> `to(...)` declares the identity of the event the mapper produces. It must keep the same qualified name as `from`; only the version may change.
 <3> `transform(...)` converts the stored payload to the requested type before calling your mapper, which returns the new payload.
-<4> The mapper receives the converted payload and a `ProcessingContext` — available for read-only context, and may be `null`.
+<4> The mapper receives the converted payload and a `ProcessingContext`. The context is available for read-only access and may be `null`.
 
 [NOTE]
 The `JsonNode` used here is the Jackson 3 type (`tools.jackson.databind.JsonNode`), the same representation Axon Framework's default converter works with.
@@ -58,7 +59,7 @@ Keep the same qualified name on both sides and change only the version.
 == Working with generic payloads
 
 `transform(Class<T>, ...)` works for any non-generic type.
-When the type you want carries type parameters — such as `Map<String, Object>` or `List<...>` — use the `TypeReference` overload so the generic information is preserved:
+When the type you want carries type parameters (such as `Map<String, Object>` or `List<...>`), use the `TypeReference` overload so the generic information is preserved:
 
 [source,java]
 ----
@@ -109,4 +110,5 @@ Keep the predicate's matched names aligned with the `to` identity's name, since 
 
 == Next steps
 
-With your transformations defined, the next step is to assemble and register them — see xref:message-transformation:configuring-transformations.adoc[Configuring transformations].
+With your transformations defined, the next step is to assemble and register them.
+See xref:message-transformation:configuring-transformations.adoc[Configuring transformations].
