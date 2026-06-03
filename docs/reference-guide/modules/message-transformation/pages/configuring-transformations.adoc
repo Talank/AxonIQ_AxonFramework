@@ -6,7 +6,7 @@ Axon Framework then applies the chain whenever events are read from the store.
 
 == Registering the chain
 
-Build the chain with the transformers in the order they should run, then register it as a component:
+Build the chain with the transformers in the order they should run:
 
 [source,java]
 ----
@@ -23,6 +23,8 @@ public static EventTransformerChain chain() {
 <1> Start building the chain.
 <2> Each transformer runs in the order it is registered — see <<_why_ordering_matters>>.
 <3> `build()` produces an immutable chain, ready to register as a component.
+
+Then register that chain with your configuration; how you do so depends on your setup:
 
 [tabs]
 ====
@@ -69,6 +71,13 @@ Register transformers in version order so each hop hands off to the one after it
 ----
 
 A stored v1 `CoursePublished` is lifted to v2 by the first transformer, then that result is lifted to v3 by the second, so your handler always receives the current shape.
+
+[TIP]
+.Prefer small, single-step transformations
+====
+Write one transformer per version step — `v1` to `v2`, then `v2` to `v3` — rather than a single transformer that jumps straight from `v1` to `v3`.
+This is the incremental approach Greg Young recommends for versioning in event-sourced systems: each step stays small, isolated, and easy to reason about, and adding a new version means appending one more transformer while the chain keeps composing the steps for you.
+====
 
 [NOTE]
 .Safety bound

@@ -107,4 +107,6 @@ public static EventTransformer build() {
 This single transformer folds every `0.x` beta version of `WelcomeMessageSent` up to `1.0.0`, instead of registering one transformer per beta version.
 Keep the predicate's matched names aligned with the `to` identity's name, since renaming an event is not supported.
 
+== Next steps
+
 With your transformations defined, the next step is to assemble and register them — see xref:message-transformation:configuring-transformations.adoc[Configuring transformations].
