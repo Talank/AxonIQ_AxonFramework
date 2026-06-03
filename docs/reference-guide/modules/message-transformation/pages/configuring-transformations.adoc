@@ -57,6 +57,7 @@ public EventTransformerChain eventTransformerChain() {
 ====
 
 The chain is built once at startup and is immutable afterwards.
+The `chain()` shown above is the one assembled in the xref:message-transformation:demo.adoc[course catalog example].
 
 [#_why_ordering_matters]
 == Why ordering matters

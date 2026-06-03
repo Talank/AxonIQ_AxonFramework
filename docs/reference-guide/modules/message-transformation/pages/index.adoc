@@ -50,6 +50,7 @@ From here:
 
 * xref:message-transformation:defining-transformations.adoc[] shows how to write the individual transformations, work with generic payloads, and match several event versions at once.
 * xref:message-transformation:configuring-transformations.adoc[] shows how to assemble them into a chain, register it, and test it.
+* xref:message-transformation:demo.adoc[] is a runnable example that exercises every technique on a course catalog end to end.
 
 == Adding the module
 
