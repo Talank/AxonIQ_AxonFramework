@@ -46,7 +46,8 @@ configurer.componentRegistry(registry -> registry
 Autodetected - Spring Boot::
 +
 --
-Expose the chain as a bean of type `EventTransformerChain`; Axon's Spring Boot integration registers it as a component, where the same enhancer detects it:
+Expose the chain as a bean of type `EventTransformerChain`.
+Axon's Spring Boot integration registers it as a component, where the same enhancer detects it:
 
 [source,java]
 ----
@@ -155,7 +156,8 @@ TransformationTester.forTransformation(CoursePublishedV1ToV2.build())        // 
 <2> The stored event to feed in: qualified name, version, and payload.
 <3> Assert on the output: its new type and payload.
 
-`TransformationTester` is a few lines of test code in the example, not a framework dependency; copy it into your own project, or assert on the built transformer however you prefer.
+`TransformationTester` is a few lines of test code in the example, not a framework dependency.
+Copy it into your own project, or assert on the built transformer however you prefer.
 
 [NOTE]
 .Untyped output is not identity-checked

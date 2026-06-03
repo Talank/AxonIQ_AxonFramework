@@ -97,6 +97,7 @@ public final class SystemAnnouncementLegacyUplift {
 ----
 
 The behavior is the same, but the Axon Framework 5 version drops the serialized-type plumbing and works with a typed payload directly.
+The identity also differs: Axon Framework 4 keyed off the payload's class name, while Axon Framework 5 keys off a logical qualified name that is decoupled from the class.
 
 [NOTE]
 .Unversioned events
@@ -107,7 +108,8 @@ Match that version in `from(...)` when lifting legacy events, as shown above.
 
 == Registering the transformations
 
-In Axon Framework 4 you registered upcasters with an `EventUpcasterChain`; in Axon Framework 5 you register transformations with an `EventTransformerChain`.
+In Axon Framework 4 you registered upcasters with an `EventUpcasterChain`.
+In Axon Framework 5 you register transformations with an `EventTransformerChain`.
 Registration order still imposes the version order, so a v1 event reaches your handler as the current version.
 See xref:message-transformation:configuring-transformations.adoc[Configuring transformations] for the full setup, including the Spring Boot configuration.
 

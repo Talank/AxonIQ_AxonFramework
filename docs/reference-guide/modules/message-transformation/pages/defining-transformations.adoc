@@ -35,7 +35,7 @@ public final class CoursePublishedV1ToV2 {
 }
 ----
 <1> `from(...)` matches the stored event identity by its `MessageType`, a qualified name plus a version. Only events with this exact identity are passed to the mapper.
-<2> `to(...)` declares the identity of the event the mapper produces. It must keep the same qualified name as `from`; only the version may change.
+<2> `to(...)` declares the identity of the event the mapper produces. It must keep the same qualified name as `from`, and only the version may change.
 <3> `transform(...)` converts the stored payload to the requested type before calling your mapper, which returns the new payload.
 <4> The mapper receives the converted payload and a `ProcessingContext`. The context is available for read-only access and may be `null`.
 
@@ -50,7 +50,7 @@ The `to` identity must share the qualified name of `from`.
 
 If they differ, the chain raises a `ChainConfigurationException`:
 
-* with a concrete `from`, the mismatch is detected when the chain is built, so the failure surfaces at startup;
+* with a concrete `from`, the mismatch is detected when the chain is built, so the failure surfaces at startup.
 * with a <<_matching_multiple_event_versions,predicate `from`>>, a match can only be resolved per event, so the failure surfaces when such an event is read.
 
 Keep the same qualified name on both sides and change only the version.

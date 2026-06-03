@@ -2,7 +2,8 @@
 = Event Transformation
 
 When an event's stored structure no longer matches what your handlers and projectors expect, an _event transformation_ rewrites it on the way out of the event store.
-The stored events stay exactly as they were written; the transformation runs every time those events are read, handing each handler the shape it expects.
+The stored events stay exactly as they were written.
+The transformation runs every time those events are read, handing each handler the shape it expects.
 
 A transformation is the tool for the structural changes that xref:events:event-versioning.adoc[payload conversion] cannot express on its own: combining two fields into one, wrapping values in a new object, or lifting a historic event onto a new version.
 
@@ -11,7 +12,7 @@ A transformation is the tool for the structural changes that xref:events:event-v
 The xref:ROOT:conversion.adoc[`Converter`] absorbs most schema evolution on its own, in two ways:
 
 * *Payload conversion at handling time*: each handler declares the type it wants, and the converter produces it from the stored payload.
-* *Converter-level compatibility settings*: defaults, ignore-unknown rules, and format-specific mappings (for example Jackson annotations, Avro reader and writer schemas, or JAXB bindings), configured on the converter rather than on the transformation chain.
+* *Converter-level compatibility settings*: defaults, ignore-unknown rules, and format-specific mappings (for example Jackson annotations, Avro reader and writer schemas, or Jakarta XML Binding), configured on the converter rather than on the transformation chain.
 
 Whether a change needs a transformation therefore depends as much on how your converter is configured as on the change itself: a lenient configuration absorbs more, a strict one rejects more.
 Adding fields with defaults, dropping fields a handler no longer reads, renaming fields, and changing compatible field types are all typically handled here.
@@ -25,7 +26,7 @@ Configure your converter first, and reach for a transformation only when the cha
 [TIP]
 .Conversion or transformation?
 ====
-A converter changes an event's _representation_; a transformation changes its _structure_.
+A converter changes an event's _representation_, while a transformation changes its _structure_.
 See xref:events:event-versioning.adoc[Event versioning] for the conversion-first approach.
 ====
 
