@@ -3,7 +3,7 @@
 
 In Axon Framework 4, structural changes to stored events were handled by _upcasters_.
 The most common form was the `SingleEventUpcaster`: a one-to-one transform from one event revision to the next.
-Axon Framework 5 replaces the single-event upcaster with an xref:message-transformation:index.adoc[event transformation] — the same idea, rewriting a stored event on the way out, expressed through a small declarative API.
+Axon Framework 5 replaces the single-event upcaster with an xref:message-transformation:index.adoc[event transformation]: the same idea, rewriting a stored event on the way out, expressed through a small declarative API.
 
 This path covers migrating one-to-one `SingleEventUpcaster` implementations to event transformations.
 
@@ -20,14 +20,14 @@ See xref:events:event-versioning.adoc[Event versioning] for the conversion-first
 |===
 | Axon Framework 4 (`SingleEventUpcaster`) | Axon Framework 5 (`EventTransformation`)
 
-| `canUpcast(...)` — decide whether this event matches
+| `canUpcast(...)`: decide whether this event matches
 | `from(MessageType)`, or `from(Predicate<MessageType>)` for a range of versions
 
 | The target type passed to `upcastPayload(...)`
-| `to(MessageType)` — declare the produced identity
+| `to(MessageType)`: declare the produced identity
 
-| `doUpcast(...)` — rewrite the serialized representation
-| `transform(type, mapper)` — map the deserialized payload
+| `doUpcast(...)`: rewrite the serialized representation
+| `transform(type, mapper)`: map the deserialized payload
 
 | `SimpleSerializedType` (payload class name + revision)
 | `MessageType` (qualified name + version)
