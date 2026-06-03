@@ -8,11 +8,15 @@ A transformation is the tool for the structural changes that xref:events:event-v
 
 == When to reach for a transformation
 
-Axon Framework already adapts stored events to the type a handler asks for through its xref:ROOT:conversion.adoc[`Converter`].
-Conversion covers most version changes for free: adding fields with defaults, dropping fields a handler no longer reads, renaming fields with Jackson annotations, and changing compatible field types.
-Configure your converter first.
+The xref:ROOT:conversion.adoc[`Converter`] absorbs most schema evolution on its own, in two ways:
 
-Reach for a transformation only when the change cannot be expressed through conversion, for example:
+* *Payload conversion at handling time* — each handler declares the type it wants, and the converter produces it from the stored payload.
+* *Converter-level compatibility settings* — defaults, ignore-unknown rules, and format-specific mappings (for example Jackson annotations, Avro reader and writer schemas, or JAXB bindings), configured on the converter rather than on the transformation chain.
+
+Whether a change needs a transformation therefore depends as much on how your converter is configured as on the change itself: a lenient configuration absorbs more, a strict one rejects more.
+Adding fields with defaults, dropping fields a handler no longer reads, renaming fields, and changing compatible field types are all typically handled here.
+
+Configure your converter first, and reach for a transformation only when the change cannot be expressed there, for example:
 
 * You need to restructure the payload itself — combine `firstName` and `lastName` into a single `fullName`, or wrap `minCapacity` and `maxCapacity` into a `range` object.
 * You want one rule to apply to _every_ handler of an event, rather than adjusting each handler's type or annotations individually.
@@ -22,7 +26,6 @@ Reach for a transformation only when the change cannot be expressed through conv
 .Conversion or transformation?
 ====
 A converter changes an event's _representation_; a transformation changes its _structure_.
-If a handler can already receive the event by declaring the fields it wants, you do not need a transformation.
 See xref:events:event-versioning.adoc[Event versioning] for the conversion-first approach.
 ====
 
