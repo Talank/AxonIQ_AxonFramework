@@ -31,15 +31,18 @@ See xref:events:event-versioning.adoc[Event versioning] for the conversion-first
 
 == What a transformation looks like
 
-A single transformation matches one event identity, declares the identity it produces, and maps the payload from the old shape to the new one:
+A single transformation looks like this:
 
 [source,java]
 ----
 EventTransformer transformer =
-        EventTransformation.from(new MessageType("coursecatalog.CoursePublished", "1.0.0"))
-                           .to(new MessageType("coursecatalog.CoursePublished", "2.0.0"))
-                           .transform(JsonNode.class, CoursePublishedV1ToV2::map);
+        EventTransformation.from(new MessageType("coursecatalog.CoursePublished", "1.0.0")) // <1>
+                           .to(new MessageType("coursecatalog.CoursePublished", "2.0.0"))   // <2>
+                           .transform(JsonNode.class, CoursePublishedV1ToV2::map);          // <3>
 ----
+<1> `from(...)` selects the stored event identity to match.
+<2> `to(...)` declares the identity the transformation produces — same name, new version.
+<3> `transform(...)` maps the old payload shape to the new one.
 
 You register one transformer per version step and let Axon Framework apply them in order, so a v1 event read today reaches your handler as the current version.
 

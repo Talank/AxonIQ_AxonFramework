@@ -16,12 +16,12 @@ public final class CoursePublishedV1ToV2 {
     private static final MessageType TO   = new MessageType("coursecatalog.CoursePublished", "2.0.0");
 
     public static EventTransformer build() {
-        return EventTransformation.from(FROM)
-                                  .to(TO)
-                                  .transform(JsonNode.class, CoursePublishedV1ToV2::map);
+        return EventTransformation.from(FROM)                                     // <1>
+                                  .to(TO)                                         // <2>
+                                  .transform(JsonNode.class, CoursePublishedV1ToV2::map); // <3>
     }
 
-    private static JsonNode map(JsonNode v1, @Nullable ProcessingContext context) {
+    private static JsonNode map(JsonNode v1, @Nullable ProcessingContext context) { // <4>
         int capacity = v1.get("capacity").asInt();
         ObjectNode v2 = JsonNodeFactory.instance.objectNode();
         v2.set("catalogId", v1.get("catalogId"));
@@ -33,12 +33,10 @@ public final class CoursePublishedV1ToV2 {
     }
 }
 ----
-
-Reading it step by step:
-
-* `from(...)` matches the stored event identity by its `MessageType` — a qualified name plus a version. Only events with this exact identity are passed to the mapper.
-* `to(...)` declares the identity of the event the mapper produces. It must keep the same qualified name as `from`; only the version may change.
-* `transform(JsonNode.class, mapper)` converts the stored payload to a `JsonNode` before calling your mapper, which returns the new payload. The `ProcessingContext` is available for read-only context and may be `null`.
+<1> `from(...)` matches the stored event identity by its `MessageType` — a qualified name plus a version. Only events with this exact identity are passed to the mapper.
+<2> `to(...)` declares the identity of the event the mapper produces. It must keep the same qualified name as `from`; only the version may change.
+<3> `transform(...)` converts the stored payload to the requested type before calling your mapper, which returns the new payload.
+<4> The mapper receives the converted payload and a `ProcessingContext` — available for read-only context, and may be `null`.
 
 [NOTE]
 The `JsonNode` used here is the Jackson 3 type (`tools.jackson.databind.JsonNode`), the same representation Axon Framework's default converter works with.
@@ -64,25 +62,26 @@ When the type you want carries type parameters — such as `Map<String, Object>`
 
 [source,java]
 ----
-private static final TypeReference<Map<String, Object>> INPUT_TYPE = new TypeReference<>() {
+private static final TypeReference<Map<String, Object>> INPUT_TYPE = new TypeReference<>() { // <1>
 };
 
 public static EventTransformer build() {
     return EventTransformation.from(FROM)
                               .to(TO)
-                              .transform(INPUT_TYPE, StudentRegisteredV1ToV2::map);
+                              .transform(INPUT_TYPE, StudentRegisteredV1ToV2::map); // <2>
 }
 
 private static Map<String, Object> map(Map<String, Object> v1, @Nullable ProcessingContext context) {
     Map<String, Object> v2 = new LinkedHashMap<>();
     v2.put("catalogId", v1.get("catalogId"));
     v2.put("studentId", v1.get("studentId"));
-    v2.put("fullName", combine(v1.get("firstName"), v1.get("lastName")));
+    v2.put("fullName", combine(v1.get("firstName"), v1.get("lastName"))); // <3>
     return v2;
 }
 ----
-
-This v1-to-v2 `StudentRegistered` transformation combines the separate `firstName` and `lastName` fields into a single `fullName`.
+<1> A `TypeReference` captures the full `Map<String, Object>` type that a `Class` token would erase.
+<2> Pass it to the `TypeReference` overload of `transform(...)`.
+<3> The mapper combines the separate `firstName` and `lastName` fields into a single `fullName`.
 
 [#_matching_multiple_event_versions]
 == Matching multiple event versions
@@ -94,14 +93,18 @@ Instead of a concrete `MessageType`, pass a predicate to `from(...)`:
 ----
 private static final Predicate<MessageType> FROM_PREDICATE =
         type -> "coursecatalog.WelcomeMessageSent".equals(type.qualifiedName().name())
-                && type.version().startsWith("0.");
+                && type.version().startsWith("0."); // <1>
 
 public static EventTransformer build() {
-    return EventTransformation.from(FROM_PREDICATE)
+    return EventTransformation.from(FROM_PREDICATE) // <2>
                               .to(new MessageType("coursecatalog.WelcomeMessageSent", "1.0.0"))
                               .transform(JsonNode.class, WelcomeMessageBetaCleanup::map);
 }
 ----
+<1> The predicate matches any stored `WelcomeMessageSent` whose version starts with `0.`.
+<2> Pass the predicate to the `from(...)` overload instead of a concrete `MessageType`.
 
 This single transformer folds every `0.x` beta version of `WelcomeMessageSent` up to `1.0.0`, instead of registering one transformer per beta version.
 Keep the predicate's matched names aligned with the `to` identity's name, since renaming an event is not supported.
+
+With your transformations defined, the next step is to assemble and register them — see xref:message-transformation:configuring-transformations.adoc[Configuring transformations].

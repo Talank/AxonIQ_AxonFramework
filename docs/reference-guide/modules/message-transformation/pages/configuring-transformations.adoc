@@ -11,15 +11,18 @@ Build the chain with the transformers in the order they should run, then registe
 [source,java]
 ----
 public static EventTransformerChain chain() {
-    return EventTransformerChain.builder()
+    return EventTransformerChain.builder()                            // <1>
                                 .register(SystemAnnouncementLegacyUplift.build())
-                                .register(CoursePublishedV1ToV2.build())
+                                .register(CoursePublishedV1ToV2.build()) // <2>
                                 .register(CoursePublishedV2ToV3.build())
                                 .register(StudentRegisteredV1ToV2.build())
                                 .register(WelcomeMessageBetaCleanup.build())
-                                .build();
+                                .build();                             // <3>
 }
 ----
+<1> Start building the chain.
+<2> Each transformer runs in the order it is registered — see <<_why_ordering_matters>>.
+<3> `build()` produces an immutable chain, ready to register as a component.
 
 [tabs]
 ====
@@ -31,9 +34,10 @@ Register the chain as a component on your `EventSourcingConfigurer`:
 [source,java]
 ----
 configurer.componentRegistry(registry -> registry
-        .registerComponent(EventTransformerChain.class,
+        .registerComponent(EventTransformerChain.class,            // <1>
                            config -> CourseCatalogTransformations.chain()));
 ----
+<1> Register the chain under `EventTransformerChain.class`; Axon Framework wires that component into the event store.
 --
 Spring Boot::
 +
@@ -52,6 +56,7 @@ public EventTransformerChain eventTransformerChain() {
 
 The chain is built once at startup and is immutable afterwards.
 
+[#_why_ordering_matters]
 == Why ordering matters
 
 A stored event flows through the chain, with each matching transformer's output feeding the next, until no further transformer matches.
@@ -91,13 +96,16 @@ Keep the mapping in a method you can call directly, feed it a sample input paylo
 ----
 @Test
 void liftsV1PayloadToV2() {
-    JsonNode v1 = readJson("/transformations/coursepublished/v1.json");
+    JsonNode v1 = readJson("/transformations/coursepublished/v1.json"); // <1>
 
-    JsonNode v2 = CoursePublishedV1ToV2.map(v1, null);
+    JsonNode v2 = CoursePublishedV1ToV2.map(v1, null);                  // <2>
 
-    assertThat(v2.get("minCapacity").asInt()).isEqualTo(50);
+    assertThat(v2.get("minCapacity").asInt()).isEqualTo(50);           // <3>
     assertThat(v2.get("maxCapacity").asInt()).isEqualTo(50);
 }
 ----
+<1> Load a sample stored payload.
+<2> Call the mapping directly — no event store and no running application.
+<3> Assert on the transformed output.
 
 To verify the handlers and projectors that consume transformed events end to end, see xref:testing:index.adoc[Testing].
