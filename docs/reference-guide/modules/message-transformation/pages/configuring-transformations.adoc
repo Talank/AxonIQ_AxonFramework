@@ -65,6 +65,14 @@ Register no chain and the event store is left untouched.
 The chain is built once at startup and is immutable afterwards.
 The `chain()` shown above is the one assembled in the xref:message-transformation:demo.adoc[course catalog example].
 
+[NOTE]
+.Transformation runs before interceptors
+====
+The enhancer installs the transformation so that, on every read, events are transformed to their current shape _before_ any message interceptor or handler sees them.
+Interceptors and handlers therefore never deal with outdated event shapes.
+If you instead need an interceptor to observe the original, stored shape, replace the default transformation enhancer with your own that installs the transformation at a different order.
+====
+
 [#_why_ordering_matters]
 == Why ordering matters
 
