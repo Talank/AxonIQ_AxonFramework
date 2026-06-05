@@ -23,8 +23,6 @@ import io.axoniq.framework.messaging.transformation.events.EventTransformation;
 import io.axoniq.framework.messaging.transformation.events.EventTransformer;
 import org.axonframework.examples.demo.coursecatalog.catalog.CourseCatalogMessageNames;
 import org.axonframework.messaging.core.MessageType;
-import org.axonframework.messaging.core.unitofwork.ProcessingContext;
-import org.jspecify.annotations.Nullable;
 
 /**
  * Lifts an unversioned {@code SystemAnnouncement} (which AF5 treats as version
@@ -46,7 +44,7 @@ public final class SystemAnnouncementLegacyUplift {
         return EventTransformation.from(FROM).to(TO).transform(JsonNode.class, SystemAnnouncementLegacyUplift::map);
     }
 
-    private static JsonNode map(JsonNode legacy, @Nullable ProcessingContext context) {
+    private static JsonNode map(JsonNode legacy) {
         ObjectNode v1 = JsonNodeFactory.instance.objectNode();
         v1.set("catalogId", legacy.get("catalogId"));
         v1.put("text", legacy.get("message").asString());

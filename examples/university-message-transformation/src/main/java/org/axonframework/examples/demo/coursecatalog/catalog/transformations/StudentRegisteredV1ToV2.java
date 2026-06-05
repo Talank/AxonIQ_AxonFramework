@@ -21,7 +21,6 @@ import io.axoniq.framework.messaging.transformation.events.EventTransformer;
 import org.axonframework.common.TypeReference;
 import org.axonframework.examples.demo.coursecatalog.catalog.CourseCatalogMessageNames;
 import org.axonframework.messaging.core.MessageType;
-import org.axonframework.messaging.core.unitofwork.ProcessingContext;
 import org.jspecify.annotations.Nullable;
 
 import java.util.LinkedHashMap;
@@ -51,7 +50,7 @@ public final class StudentRegisteredV1ToV2 {
         return EventTransformation.from(FROM).to(TO).transform(INPUT_TYPE, StudentRegisteredV1ToV2::map);
     }
 
-    private static Map<String, Object> map(Map<String, Object> v1, @Nullable ProcessingContext context) {
+    private static Map<String, Object> map(Map<String, Object> v1) {
         Map<String, Object> v2 = new LinkedHashMap<>();
         v2.put("catalogId", v1.get("catalogId"));
         v2.put("studentId", v1.get("studentId"));

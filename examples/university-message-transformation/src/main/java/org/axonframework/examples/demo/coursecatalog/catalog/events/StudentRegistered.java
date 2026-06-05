@@ -18,23 +18,41 @@ package org.axonframework.examples.demo.coursecatalog.catalog.events;
 
 import org.axonframework.examples.demo.coursecatalog.catalog.CourseCatalogMessageNames;
 import org.axonframework.examples.demo.coursecatalog.catalog.CourseCatalogTags;
+import org.axonframework.examples.demo.coursecatalog.catalog.transformations.RequestRegion;
 import org.axonframework.examples.demo.coursecatalog.shared.ids.CatalogId;
 import org.axonframework.examples.demo.coursecatalog.shared.ids.StudentId;
 import org.axonframework.eventsourcing.annotation.EventTag;
 import org.axonframework.messaging.eventhandling.annotation.Event;
 
 /**
- * A student was registered with the catalog. Current shape (v2): a single combined
- * {@code fullName} (privacy review collapsed first and last name).
+ * A student was registered with the catalog. Current shape (v3): adds a {@code region}
+ * after the catalog gained multi-region support. The v2 shape collapsed first and last
+ * name into a single {@code fullName} during a privacy review.
  *
  * @param catalogId the catalog the student is registered in
  * @param studentId the student
  * @param fullName  combined first and last name
+ * @param region    the region the registration belongs to; backfilled at read time for
+ *                  historic events (see {@link RequestRegion})
  */
-@Event(namespace = CourseCatalogMessageNames.NAMESPACE, name = "StudentRegistered", version = "2.0.0")
+@Event(namespace = CourseCatalogMessageNames.NAMESPACE, name = "StudentRegistered", version = "3.0.0")
 public record StudentRegistered(
         @EventTag(key = CourseCatalogTags.CATALOG_ID) CatalogId catalogId,
         @EventTag(key = CourseCatalogTags.STUDENT_ID) StudentId studentId,
-        String fullName
+        String fullName,
+        String region
 ) {
+
+    /**
+     * Convenience constructor for a registration with no explicit region, defaulting to
+     * {@link RequestRegion#UNKNOWN_REGION}. Mirrors how historic events are read: the
+     * region is normally derived at read time rather than written into the payload.
+     *
+     * @param catalogId the catalog the student is registered in
+     * @param studentId the student
+     * @param fullName  combined first and last name
+     */
+    public StudentRegistered(CatalogId catalogId, StudentId studentId, String fullName) {
+        this(catalogId, studentId, fullName, RequestRegion.UNKNOWN_REGION);
+    }
 }

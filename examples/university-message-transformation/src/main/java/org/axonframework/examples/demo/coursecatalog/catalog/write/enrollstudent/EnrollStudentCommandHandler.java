@@ -22,6 +22,7 @@ import org.axonframework.examples.demo.coursecatalog.catalog.events.CoursePublis
 import org.axonframework.examples.demo.coursecatalog.catalog.events.RegistrationClosed;
 import org.axonframework.examples.demo.coursecatalog.catalog.events.StudentEnrolledInCourse;
 import org.axonframework.examples.demo.coursecatalog.catalog.events.StudentRegistered;
+import org.axonframework.examples.demo.coursecatalog.catalog.transformations.RequestRegion;
 import org.axonframework.examples.demo.coursecatalog.catalog.values.CapacityRange;
 import org.axonframework.eventsourcing.annotation.EventCriteriaBuilder;
 import org.axonframework.eventsourcing.annotation.EventSourcedEntity;
@@ -60,7 +61,7 @@ class EnrollStudentCommandHandler {
         if (state.alreadyEnrolled) {
             return List.of();
         }
-        return List.of(new StudentEnrolledInCourse(command.courseId(), command.studentId()));
+        return List.of(new StudentEnrolledInCourse(command.courseId(), command.studentId(), state.region));
     }
 
     private static void assertCoursePublished(State state) {
@@ -94,6 +95,7 @@ class EnrollStudentCommandHandler {
 
         private boolean coursePublished;
         private boolean studentRegistered;
+        private String region = RequestRegion.UNKNOWN_REGION;
         private boolean registrationClosed;
         private boolean alreadyEnrolled;
         @Nullable
@@ -113,6 +115,7 @@ class EnrollStudentCommandHandler {
         @EventSourcingHandler
         void evolve(StudentRegistered event) {
             this.studentRegistered = true;
+            this.region = event.region();
         }
 
         @EventSourcingHandler
