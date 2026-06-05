@@ -16,22 +16,16 @@
 
 package org.axonframework.examples.demo.coursecatalog.catalog.read.catalogview;
 
-import java.util.List;
+import org.axonframework.examples.demo.coursecatalog.shared.ids.StudentId;
 
 /**
- * Whole-catalog snapshot returned by the
- * {@link org.axonframework.examples.demo.coursecatalog.catalog.read.catalogview.GetCourseCatalogView}
- * query.
+ * One welcome message in the catalog read model. The projection only ever sees the
+ * current shape: a historic beta-versioned {@code WelcomeMessageSent} (0.5 / 0.7 / 0.9)
+ * is lifted to {@code 1.0.0} by the transformation chain on the read path, with the
+ * legacy {@code subject} field dropped, before the projection records it here.
  *
- * @param courses             every published course, in registration order
- * @param announcements       every system announcement, in arrival order
- * @param registeredStudents  total number of students registered in the catalog
- * @param welcomeMessages     every welcome message, lifted to the current shape by the chain
+ * @param studentId the recipient
+ * @param body      the message body
  */
-public record CourseCatalogView(
-        List<CatalogViewReadModel> courses,
-        List<String> announcements,
-        int registeredStudents,
-        List<WelcomeMessageView> welcomeMessages
-) {
+public record WelcomeMessageView(StudentId studentId, String body) {
 }

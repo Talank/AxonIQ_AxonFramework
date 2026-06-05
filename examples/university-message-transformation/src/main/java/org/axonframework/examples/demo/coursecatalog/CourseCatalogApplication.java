@@ -26,6 +26,7 @@ import org.axonframework.examples.demo.coursecatalog.catalog.Ids;
 import org.axonframework.examples.demo.coursecatalog.catalog.read.catalogview.CatalogViewReadModel;
 import org.axonframework.examples.demo.coursecatalog.catalog.read.catalogview.CourseCatalogView;
 import org.axonframework.examples.demo.coursecatalog.catalog.read.catalogview.GetCourseCatalogView;
+import org.axonframework.examples.demo.coursecatalog.catalog.read.catalogview.WelcomeMessageView;
 import org.axonframework.examples.demo.coursecatalog.catalog.seed.SeedCatalog;
 import org.axonframework.examples.demo.coursecatalog.catalog.values.CapacityRange;
 import org.axonframework.examples.demo.coursecatalog.catalog.write.enrollstudent.EnrollStudent;
@@ -143,17 +144,20 @@ public class CourseCatalogApplication {
 
     private static void awaitProjectionCatchUp(AxonConfiguration configuration) {
         // Expect 5 historic CoursePublished + 1 sample published course = 6 courses
-        // in the view, plus the 1 system announcement seeded.
+        // in the view, plus the 1 system announcement and 3 beta welcome messages seeded.
         Awaitility.await("catalog projection catch-up")
                   .atMost(Duration.ofSeconds(10))
                   .pollInterval(Duration.ofMillis(100))
                   .until(() -> {
                       CourseCatalogView v = queryView(configuration);
-                      logger.debug("Waiting for projection: courses={}, announcements={}, registeredStudents={}",
-                                   v.courses().size(), v.announcements().size(), v.registeredStudents());
+                      logger.debug("Waiting for projection: courses={}, announcements={}, "
+                                           + "registeredStudents={}, welcomeMessages={}",
+                                   v.courses().size(), v.announcements().size(),
+                                   v.registeredStudents(), v.welcomeMessages().size());
                       return v.courses().size() >= 6
                               && !v.announcements().isEmpty()
-                              && v.registeredStudents() >= 4;
+                              && v.registeredStudents() >= 4
+                              && v.welcomeMessages().size() >= 3;
                   });
     }
 
@@ -174,6 +178,10 @@ public class CourseCatalogApplication {
         report.append("Announcements (").append(view.announcements().size()).append("):\n");
         for (String announcement : view.announcements()) {
             report.append("  - ").append(announcement).append('\n');
+        }
+        report.append("Welcome messages (").append(view.welcomeMessages().size()).append("):\n");
+        for (WelcomeMessageView message : view.welcomeMessages()) {
+            report.append("  - ").append(message.studentId()).append(": ").append(message.body()).append('\n');
         }
         String reportAsString = report.toString();
         logger.info(reportAsString);

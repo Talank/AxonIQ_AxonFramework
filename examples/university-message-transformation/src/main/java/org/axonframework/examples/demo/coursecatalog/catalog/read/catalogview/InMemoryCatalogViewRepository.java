@@ -39,6 +39,7 @@ class InMemoryCatalogViewRepository implements CatalogViewRepository {
     private final Map<CourseId, Set<StudentId>> enrolments = new HashMap<>();
     private final Set<String> announcements = new LinkedHashSet<>();
     private final Set<StudentId> registeredStudents = new HashSet<>();
+    private final Map<StudentId, String> welcomeMessages = new LinkedHashMap<>();
 
     @Override
     public synchronized void saveCourse(CatalogViewReadModel course) {
@@ -72,11 +73,19 @@ class InMemoryCatalogViewRepository implements CatalogViewRepository {
     }
 
     @Override
+    public synchronized void recordWelcomeMessage(StudentId studentId, String body) {
+        welcomeMessages.put(studentId, body);
+    }
+
+    @Override
     public synchronized CourseCatalogView snapshot() {
         return new CourseCatalogView(
                 List.copyOf(courses.values()),
                 List.copyOf(announcements),
-                registeredStudents.size()
+                registeredStudents.size(),
+                welcomeMessages.entrySet().stream()
+                               .map(entry -> new WelcomeMessageView(entry.getKey(), entry.getValue()))
+                               .toList()
         );
     }
 }

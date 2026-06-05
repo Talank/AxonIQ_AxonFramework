@@ -20,6 +20,7 @@ import org.axonframework.common.configuration.AxonConfiguration;
 import org.axonframework.examples.demo.coursecatalog.catalog.read.catalogview.CatalogViewReadModel;
 import org.axonframework.examples.demo.coursecatalog.catalog.read.catalogview.CourseCatalogView;
 import org.axonframework.examples.demo.coursecatalog.catalog.read.catalogview.GetCourseCatalogView;
+import org.axonframework.examples.demo.coursecatalog.catalog.read.catalogview.WelcomeMessageView;
 import org.axonframework.examples.demo.coursecatalog.catalog.values.CapacityRange;
 import org.axonframework.examples.demo.coursecatalog.catalog.write.enrollstudent.EnrollStudent;
 import org.axonframework.examples.demo.coursecatalog.catalog.write.publishcourse.PublishCourse;
@@ -133,6 +134,7 @@ final class InteractiveShell {
             case "publish" -> { publish(tokens); yield true; }
             case "capacity" -> { capacity(tokens); yield true; }
             case "enroll" -> { enroll(tokens); yield true; }
+            case "welcome" -> { welcome(tokens); yield true; }
             case "exit", "quit" -> false;
             default -> { unknown(head); yield true; }
         };
@@ -165,6 +167,19 @@ final class InteractiveShell {
         print("[ok] enrolled " + tokens.get(2) + " in " + tokens.get(1));
     }
 
+    private void welcome(List<String> tokens) {
+        requireArgs(tokens, 2, "welcome <studentId>");
+        StudentId studentId = StudentId.of(tokens.get(1));
+        // The body shown here was lifted from a historic 0.x WelcomeMessageSent by the
+        // transformation chain on the read path; the legacy 'subject' field is gone.
+        queryCatalog().welcomeMessages().stream()
+                      .filter(message -> message.studentId().equals(studentId))
+                      .findFirst()
+                      .ifPresentOrElse(
+                              message -> print("  " + message.studentId() + ": " + message.body()),
+                              () -> print("[error] no welcome message for " + tokens.get(1)));
+    }
+
     private void unknown(String head) {
         print("[error] unknown command '" + head + "'. Type 'help' for the list.");
     }
@@ -185,14 +200,13 @@ final class InteractiveShell {
         print("  capacity <courseId> <min> <max>             Update a course's capacity range");
         print("  enroll   <courseId> <studentId>             Enroll a student in a course");
         print("  view                                        Print the catalog view");
+        print("  welcome  <studentId>                        Show a student's welcome message");
         print("  help                                        Show this message");
         print("  exit                                        Shut down");
     }
 
     private void printView() {
-        CourseCatalogView view = queries.query(new GetCourseCatalogView(), CourseCatalogView.class, null)
-                                        .orTimeout(5, TimeUnit.SECONDS)
-                                        .join();
+        CourseCatalogView view = queryCatalog();
         print("Registered students: " + view.registeredStudents());
         print("Courses (" + view.courses().size() + "):");
         for (CatalogViewReadModel course : view.courses()) {
@@ -206,6 +220,16 @@ final class InteractiveShell {
         for (String announcement : view.announcements()) {
             print("  - " + announcement);
         }
+        print("Welcome messages (" + view.welcomeMessages().size() + "):");
+        for (WelcomeMessageView message : view.welcomeMessages()) {
+            print("  - " + message.studentId() + ": " + message.body());
+        }
+    }
+
+    private CourseCatalogView queryCatalog() {
+        return queries.query(new GetCourseCatalogView(), CourseCatalogView.class, null)
+                      .orTimeout(5, TimeUnit.SECONDS)
+                      .join();
     }
 
     private void print(String line) {
