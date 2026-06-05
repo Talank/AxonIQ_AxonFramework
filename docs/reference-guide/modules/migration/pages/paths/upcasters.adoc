@@ -87,7 +87,7 @@ public final class SystemAnnouncementLegacyUplift {
                                   .transform(JsonNode.class, SystemAnnouncementLegacyUplift::map);
     }
 
-    private static JsonNode map(JsonNode legacy, @Nullable ProcessingContext context) {
+    private static JsonNode map(JsonNode legacy) {
         ObjectNode v1 = JsonNodeFactory.instance.objectNode();
         v1.set("catalogId", legacy.get("catalogId"));
         v1.put("text", legacy.get("message").asString());
@@ -118,3 +118,12 @@ See xref:message-transformation:configuring-transformations.adoc[Configuring tra
 * A transformation is strictly one-to-one and keeps the event's qualified name: it may change the version and payload, but not the name. Renaming an event is not supported.
 * You map a _deserialized_ payload (`JsonNode`, `Map<String, Object>`, ...) instead of an `IntermediateEventRepresentation`.
 * Mappers must be deterministic and side-effect-free, exactly as upcasters were expected to be.
+
+[TIP]
+.Prefer a type-safe mapper where you can
+====
+The example above maps an untyped `JsonNode`, the closest equivalent to the Axon Framework 4 `IntermediateEventRepresentation`.
+When the hop produces an event you still have as a class, usually the current version, map straight to it instead and describe the old shape as a plain `record`.
+The mapper then works on named, typed fields, and a wrong-shaped output is caught for you.
+See xref:message-transformation:defining-transformations.adoc#_mapping_to_a_typed_event[Mapping to a typed event].
+====

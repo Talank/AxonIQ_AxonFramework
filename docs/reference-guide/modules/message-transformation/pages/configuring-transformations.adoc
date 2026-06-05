@@ -170,10 +170,9 @@ Copy it into your own project, or assert on the built transformer however you pr
 [NOTE]
 .Untyped output is not identity-checked
 ====
-When a mapper returns a typed object, Axon Framework resolves its identity and raises a `ChainConfigurationException` if it does not match the declared `to`.
+When a mapper returns a typed object, such as the current event from a xref:message-transformation:defining-transformations.adoc#_mapping_to_a_typed_event[typed mapper], Axon Framework resolves its identity and raises a `ChainConfigurationException` if it does not match the declared `to`.
 When a mapper returns a structural payload (a `JsonNode`, a `Map`, or raw bytes), that check is skipped and the declared `to` is trusted as-is.
-The transformations on these pages all return `JsonNode` or `Map`, so the framework cannot catch a wrong-shaped output for you.
-Cover them with tests like the one above.
+For those untyped hops the framework cannot catch a wrong-shaped output, so cover them with tests like the one above.
 ====
 
 To verify the handlers and projectors that consume transformed events end to end, see xref:testing:index.adoc[Testing].
