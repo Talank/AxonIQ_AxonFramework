@@ -16,20 +16,25 @@
 
 package org.axonframework.examples.demo.coursecatalog.catalog.transformations;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.node.JsonNodeFactory;
-import tools.jackson.databind.node.ObjectNode;
 import io.axoniq.framework.messaging.transformation.events.EventTransformation;
 import io.axoniq.framework.messaging.transformation.events.EventTransformer;
 import org.axonframework.examples.demo.coursecatalog.catalog.CourseCatalogMessageNames;
+import org.axonframework.examples.demo.coursecatalog.catalog.events.CoursePublished;
+import org.axonframework.examples.demo.coursecatalog.catalog.values.CapacityRange;
+import org.axonframework.examples.demo.coursecatalog.shared.ids.CatalogId;
+import org.axonframework.examples.demo.coursecatalog.shared.ids.CourseId;
 import org.axonframework.messaging.core.MessageType;
-import org.axonframework.messaging.core.unitofwork.ProcessingContext;
-import org.jspecify.annotations.Nullable;
 
 /**
- * Lifts a v2 {@code CoursePublished} (separate {@code minCapacity} and
- * {@code maxCapacity}) into the v3 shape that wraps both into a single
- * {@code range} value object.
+ * Lifts a v2 {@code CoursePublished} into the current v3 shape, wrapping
+ * {@code minCapacity}/{@code maxCapacity} into a single {@code range}.
+ * <p>
+ * Type-safe variant: instead of reading an untyped {@code JsonNode}, it declares the stored v2
+ * shape as a {@link V2Schema} {@code record} and maps it to the current {@link CoursePublished}
+ * event. The mapper works on named, typed fields, so a misspelled field or wrong type is a
+ * compile error. {@link V2Schema} only mirrors how v2 was stored - including identifiers written
+ * as {@code {"value": ...}} objects - and stays free of the live value objects, which the mapper
+ * builds once at the end.
  */
 public final class CoursePublishedV2ToV3 {
 
@@ -41,17 +46,25 @@ public final class CoursePublishedV2ToV3 {
 
     /** @return the transformer registered into the chain */
     public static EventTransformer build() {
-        return EventTransformation.from(FROM).to(TO).transform(JsonNode.class, CoursePublishedV2ToV3::map);
+        return EventTransformation.from(FROM).to(TO).transform(V2Schema.class, CoursePublishedV2ToV3::map);
     }
 
-    private static JsonNode map(JsonNode v2, @Nullable ProcessingContext context) {
-        ObjectNode v3 = JsonNodeFactory.instance.objectNode();
-        v3.set("catalogId", v2.get("catalogId"));
-        v3.set("courseId",  v2.get("courseId"));
-        v3.set("name",      v2.get("name"));
-        ObjectNode range = v3.putObject("range");
-        range.put("min", v2.get("minCapacity").asInt());
-        range.put("max", v2.get("maxCapacity").asInt());
-        return v3;
+    private static CoursePublished map(V2Schema v2) {
+        return new CoursePublished(
+                new CatalogId(v2.catalogId().value()),
+                new CourseId(v2.courseId().value()),
+                v2.name(),
+                new CapacityRange(v2.minCapacity(), v2.maxCapacity())
+        );
+    }
+
+    /** Wire shape of a v2 {@code CoursePublished}: {@code capacity} split into a min and max. */
+    record V2Schema(Id catalogId, Id courseId, String name, int minCapacity, int maxCapacity) {
+
+    }
+
+    /** Wire shape of a stored id value object: a single {@code value} string. */
+    record Id(String value) {
+
     }
 }

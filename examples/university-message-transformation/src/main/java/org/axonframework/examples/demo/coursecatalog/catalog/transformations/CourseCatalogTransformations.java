@@ -19,9 +19,9 @@ package org.axonframework.examples.demo.coursecatalog.catalog.transformations;
 import io.axoniq.framework.messaging.transformation.events.EventTransformerChain;
 
 /**
- * Composes the catalog's five event transformations into a single
+ * Composes the catalog's event transformations into a single
  * {@link EventTransformerChain}. Registration order matters: v1 to v2 must precede
- * v2 to v3 so a stored v1 event reaches a handler as v3.
+ * v2 to v3 so a stored v1 event reaches a handler as the current shape.
  */
 public final class CourseCatalogTransformations {
 
@@ -35,6 +35,7 @@ public final class CourseCatalogTransformations {
                                     .register(CoursePublishedV1ToV2.build())
                                     .register(CoursePublishedV2ToV3.build())
                                     .register(StudentRegisteredV1ToV2.build())
+                                    .register(StudentRegisteredV2ToV3.build())
                                     .register(WelcomeMessageBetaCleanup.build())
                                     .build();
     }

@@ -18,6 +18,7 @@ package org.axonframework.examples.demo.coursecatalog.catalog.events;
 
 import org.axonframework.examples.demo.coursecatalog.catalog.CourseCatalogMessageNames;
 import org.axonframework.examples.demo.coursecatalog.catalog.CourseCatalogTags;
+import org.axonframework.examples.demo.coursecatalog.catalog.transformations.RequestRegion;
 import org.axonframework.examples.demo.coursecatalog.shared.ids.CourseId;
 import org.axonframework.examples.demo.coursecatalog.shared.ids.StudentId;
 import org.axonframework.eventsourcing.annotation.EventTag;
@@ -28,10 +29,24 @@ import org.axonframework.messaging.eventhandling.annotation.Event;
  *
  * @param courseId  the course
  * @param studentId the enrolled student
+ * @param region    the region the enrolment was processed in, carried over from the student's
+ *                  registration as resolved for this read (see {@link RequestRegion})
  */
 @Event(namespace = CourseCatalogMessageNames.NAMESPACE, name = "StudentEnrolledInCourse", version = "1.0.0")
 public record StudentEnrolledInCourse(
         @EventTag(key = CourseCatalogTags.COURSE_ID) CourseId courseId,
-        @EventTag(key = CourseCatalogTags.STUDENT_ID) StudentId studentId
+        @EventTag(key = CourseCatalogTags.STUDENT_ID) StudentId studentId,
+        String region
 ) {
+
+    /**
+     * Convenience constructor for an enrolment with no explicit region, defaulting to
+     * {@link RequestRegion#UNKNOWN_REGION}.
+     *
+     * @param courseId  the course
+     * @param studentId the enrolled student
+     */
+    public StudentEnrolledInCourse(CourseId courseId, StudentId studentId) {
+        this(courseId, studentId, RequestRegion.UNKNOWN_REGION);
+    }
 }

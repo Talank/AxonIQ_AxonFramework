@@ -23,12 +23,13 @@ import io.axoniq.framework.messaging.transformation.events.EventTransformation;
 import io.axoniq.framework.messaging.transformation.events.EventTransformer;
 import org.axonframework.examples.demo.coursecatalog.catalog.CourseCatalogMessageNames;
 import org.axonframework.messaging.core.MessageType;
-import org.axonframework.messaging.core.unitofwork.ProcessingContext;
-import org.jspecify.annotations.Nullable;
 
 /**
  * Lifts a v1 {@code CoursePublished} (single {@code capacity} field) into the
  * v2 shape with {@code minCapacity} and {@code maxCapacity}.
+ * <p>
+ * Untyped variant: this hop's output is a historic shape with no class of its own, so it reads
+ * and writes a {@code JsonNode}. See {@link CoursePublishedV2ToV3} for the type-safe alternative.
  */
 public final class CoursePublishedV1ToV2 {
 
@@ -43,7 +44,7 @@ public final class CoursePublishedV1ToV2 {
         return EventTransformation.from(FROM).to(TO).transform(JsonNode.class, CoursePublishedV1ToV2::map);
     }
 
-    private static JsonNode map(JsonNode v1, @Nullable ProcessingContext context) {
+    private static JsonNode map(JsonNode v1) {
         int capacity = v1.get("capacity").asInt();
         ObjectNode v2 = JsonNodeFactory.instance.objectNode();
         v2.set("catalogId", v1.get("catalogId"));

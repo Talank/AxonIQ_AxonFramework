@@ -30,6 +30,7 @@ class MultiHopChainTesterTest {
     @Test
     void v1CoursePublishedReachesHandlerAsV3() {
         // The chain has both v1 to v2 and v2 to v3 registered; fixed-point iteration applies them in order.
+        // The final hop returns the current CoursePublished event, so compare it structurally to the v3 wire shape.
         ChainTester.forChain(CourseCatalogTransformations.chain())
                    .given()
                    .messageType(CourseCatalogMessageNames.COURSE_PUBLISHED, "1.0.0")
@@ -38,7 +39,7 @@ class MultiHopChainTesterTest {
                    .then()
                    .success()
                    .outputType(V3_TYPE)
-                   .outputPayloadFromResource(V3_FIXTURE);
+                   .outputPayloadStructurallyEquals(V3_FIXTURE);
     }
 
     @Test
@@ -51,7 +52,7 @@ class MultiHopChainTesterTest {
                    .then()
                    .success()
                    .outputType(V3_TYPE)
-                   .outputPayloadFromResource(V3_FIXTURE);
+                   .outputPayloadStructurallyEquals(V3_FIXTURE);
     }
 
     @Test
