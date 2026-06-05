@@ -16,7 +16,6 @@
 
 package org.axonframework.examples.demo.coursecatalog.catalog.write.enrollstudent;
 
-import org.axonframework.examples.demo.coursecatalog.catalog.write.RequestRegionCommandInterceptor;
 import org.axonframework.eventsourcing.configuration.EventSourcedEntityModule;
 import org.axonframework.eventsourcing.configuration.EventSourcingConfigurer;
 import org.axonframework.messaging.commandhandling.configuration.CommandHandlingModule;
@@ -41,8 +40,6 @@ public final class EnrollStudentConfiguration {
                 .autodetectedCommandHandlingComponent(c -> new EnrollStudentCommandHandler());
 
         return configurer
-                .messaging(messaging -> messaging.registerCommandHandlerInterceptor(
-                        c -> new RequestRegionCommandInterceptor()))
                 .registerEntity(stateEntity)
                 .registerCommandHandlingModule(commandHandling);
     }
