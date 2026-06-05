@@ -23,41 +23,37 @@ import io.axoniq.framework.messaging.transformation.events.EventTransformation;
 import io.axoniq.framework.messaging.transformation.events.EventTransformer;
 import org.axonframework.examples.demo.coursecatalog.catalog.CourseCatalogMessageNames;
 import org.axonframework.messaging.core.MessageType;
-import org.axonframework.messaging.core.QualifiedName;
 import org.axonframework.messaging.core.unitofwork.ProcessingContext;
 import org.jspecify.annotations.Nullable;
 
 import java.util.function.Predicate;
 
 /**
- * Folds every {@code 0.x} beta version of {@code WelcomeMessageSent} up to {@code 1.0.0} with a
- * single transformer. The predicate matches on version alone; {@code declaringFromTypes(...)}
- * scopes it to {@code WelcomeMessageSent}, so the predicate is only ever evaluated against
- * {@code WelcomeMessageSent} events and a type-filtering read for that name stays scoped to it
- * instead of scanning every stored event.
+ * The same {@code 0.x} beta cleanup as {@link WelcomeMessageBetaCleanup}, but expressed without
+ * {@code declaringFromTypes(...)}. The qualified-name guard must then live inside the predicate,
+ * and because the chain cannot look inside a predicate, a type-filtering read drops its type
+ * filter (a broader read) so nothing is excluded before the predicate runs.
  * <p>
- * Contrast {@link WelcomeMessageBetaCleanupWithoutPreFilter}, which expresses the same rule
- * without {@code declaringFromTypes(...)}.
+ * Kept beside {@link WelcomeMessageBetaCleanup} to contrast the two predicate-{@code from}
+ * styles; the chain registers the {@code declaringFromTypes(...)} form.
  */
-public final class WelcomeMessageBetaCleanup {
+public final class WelcomeMessageBetaCleanupWithoutPreFilter {
 
-    private static final Predicate<MessageType> BETA_VERSION =
-            type -> type.version().startsWith("0.");
+    private static final Predicate<MessageType> NAME_AND_BETA_VERSION =
+            type -> CourseCatalogMessageNames.WELCOME_MESSAGE_SENT.equals(type.qualifiedName().name())
+                    && type.version().startsWith("0.");
 
-    private static final QualifiedName FROM_NAME =
-            new QualifiedName(CourseCatalogMessageNames.WELCOME_MESSAGE_SENT);
-    // Same name, bumped version: renaming an event is not supported.
-    private static final MessageType TO = new MessageType(FROM_NAME, "1.0.0");
+    private static final MessageType TO =
+            new MessageType(CourseCatalogMessageNames.WELCOME_MESSAGE_SENT, "1.0.0");
 
-    private WelcomeMessageBetaCleanup() {
+    private WelcomeMessageBetaCleanupWithoutPreFilter() {
     }
 
-    /** @return the transformer registered into the chain */
+    /** @return the transformer; an unregistered alternative to {@link WelcomeMessageBetaCleanup} */
     public static EventTransformer build() {
-        return EventTransformation.from(BETA_VERSION)
-                                  .declaringFromTypes(FROM_NAME)
+        return EventTransformation.from(NAME_AND_BETA_VERSION)
                                   .to(TO)
-                                  .transform(JsonNode.class, WelcomeMessageBetaCleanup::map);
+                                  .transform(JsonNode.class, WelcomeMessageBetaCleanupWithoutPreFilter::map);
     }
 
     private static JsonNode map(JsonNode beta, @Nullable ProcessingContext context) {
