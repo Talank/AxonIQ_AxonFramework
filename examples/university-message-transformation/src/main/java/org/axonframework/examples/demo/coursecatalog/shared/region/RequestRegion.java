@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.axonframework.examples.demo.coursecatalog.catalog.transformations;
+package org.axonframework.examples.demo.coursecatalog.shared.region;
 
 import org.axonframework.messaging.core.Context;
 import org.axonframework.messaging.core.unitofwork.ProcessingContext;
@@ -27,10 +27,11 @@ import org.jspecify.annotations.Nullable;
  * Most transformations in this catalog are pure structural rewrites and ignore the
  * {@code ProcessingContext} entirely. This one models the exception: the catalog gained
  * multi-region support only after events had been written, so historic events have no
- * region. {@link StudentRegisteredV2ToV3} backfills it from the region the read runs in.
+ * region. {@link org.axonframework.examples.demo.coursecatalog.catalog.transformations.StudentRegisteredV2ToV3}
+ * backfills it from the region the read runs in.
  * <p>
  * In a real application the region would be attached once, at the edge of a request — for
- * example a command interceptor reading it from the caller's identity and calling
+ * example, a command interceptor reading it from the caller's identity and calling
  * {@code context.putResource(}{@link #RESOURCE_KEY}{@code , region)}. Because the same
  * {@code ProcessingContext} threads through to the transformation chain when an entity is
  * sourced, the backfill is stable for the whole operation. When no region is attached
@@ -44,7 +45,8 @@ public final class RequestRegion {
 
     /**
      * Metadata key a caller uses to carry the region into a message, so an edge interceptor
-     * (see {@link RequestRegionCommandInterceptor}) can lift it onto the {@link ProcessingContext}.
+     * (see {@link org.axonframework.examples.demo.coursecatalog.catalog.write.RequestRegionCommandInterceptor})
+ * can lift it onto the {@link ProcessingContext}.
      */
     public static final String METADATA_KEY = "region";
 

@@ -16,7 +16,7 @@
 
 package org.axonframework.examples.demo.coursecatalog.catalog.write.enrollstudent;
 
-import org.axonframework.examples.demo.coursecatalog.catalog.transformations.RequestRegionCommandInterceptor;
+import org.axonframework.examples.demo.coursecatalog.catalog.write.RequestRegionCommandInterceptor;
 import org.axonframework.eventsourcing.configuration.EventSourcedEntityModule;
 import org.axonframework.eventsourcing.configuration.EventSourcingConfigurer;
 import org.axonframework.messaging.commandhandling.configuration.CommandHandlingModule;

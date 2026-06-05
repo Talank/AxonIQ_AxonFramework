@@ -45,8 +45,9 @@ public interface CatalogViewRepository {
     /**
      * @param courseId  the course the student enrolled in
      * @param studentId the enrolled student (re-enrolling the same id is a no-op)
+     * @param region    the region resolved for this enrolment
      */
-    void recordEnrolment(CourseId courseId, StudentId studentId);
+    void recordEnrolment(CourseId courseId, StudentId studentId, String region);
 
     /** @return the full snapshot of the catalog */
     CourseCatalogView snapshot();

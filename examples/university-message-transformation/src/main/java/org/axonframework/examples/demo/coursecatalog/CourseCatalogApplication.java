@@ -25,8 +25,10 @@ import org.axonframework.examples.demo.coursecatalog.catalog.CourseCatalogModule
 import org.axonframework.examples.demo.coursecatalog.catalog.Ids;
 import org.axonframework.examples.demo.coursecatalog.catalog.read.catalogview.CatalogViewReadModel;
 import org.axonframework.examples.demo.coursecatalog.catalog.read.catalogview.CourseCatalogView;
+import org.axonframework.examples.demo.coursecatalog.catalog.read.catalogview.EnrolmentReadModel;
 import org.axonframework.examples.demo.coursecatalog.catalog.read.catalogview.GetCourseCatalogView;
 import org.axonframework.examples.demo.coursecatalog.catalog.seed.SeedCatalog;
+import org.axonframework.examples.demo.coursecatalog.shared.region.RequestRegion;
 import org.axonframework.examples.demo.coursecatalog.catalog.values.CapacityRange;
 import org.axonframework.examples.demo.coursecatalog.catalog.write.enrollstudent.EnrollStudent;
 import org.axonframework.examples.demo.coursecatalog.catalog.write.publishcourse.PublishCourse;
@@ -35,6 +37,7 @@ import org.axonframework.examples.demo.coursecatalog.shared.ids.CourseId;
 import org.axonframework.examples.demo.coursecatalog.shared.ids.StudentId;
 import org.axonframework.eventsourcing.configuration.EventSourcingConfigurer;
 import org.axonframework.messaging.commandhandling.gateway.CommandGateway;
+import org.axonframework.messaging.core.Metadata;
 import org.axonframework.messaging.queryhandling.gateway.QueryGateway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -133,25 +136,35 @@ public class CourseCatalogApplication {
         logger.info("Dispatching sample commands...");
         var commandGateway = configuration.getComponent(CommandGateway.class);
 
-        // Publish a brand-new course (current shape v3), update its capacity, enrol a student.
+        // Publish a brand-new course (current shape v3) and update its capacity.
         CourseId courseId = CourseId.of("microservices-101");
-        StudentId studentId = StudentId.of("alice");
         commandGateway.sendAndWait(new PublishCourse(courseId, "Microservices 101", new CapacityRange(5, 25)));
         commandGateway.sendAndWait(new UpdateCourseCapacity(courseId, new CapacityRange(10, 30)));
-        commandGateway.sendAndWait(new EnrollStudent(courseId, studentId));
+
+        // Enrol a historic student with no region in scope: the enrolment falls back to GLOBAL.
+        commandGateway.sendAndWait(new EnrollStudent(courseId, StudentId.of("alice")));
+        // Enrol another historic student into a historic course, this time with a region carried as
+        // metadata: the interceptor lifts it onto the ProcessingContext, so StudentRegisteredV2ToV3
+        // backfills "EU" while sourcing the student, and the enrolment carries it into the view.
+        commandGateway.send(new EnrollStudent(CourseId.of("hexagonal-architecture"), StudentId.of("bob")),
+                            Metadata.with(RequestRegion.METADATA_KEY, "EU"))
+                      .wait(Object.class);
     }
 
     private static void awaitProjectionCatchUp(AxonConfiguration configuration) {
         // Expect 5 historic CoursePublished + 1 sample published course = 6 courses
-        // in the view, plus the 1 system announcement seeded.
+        // in the view, the 1 seeded system announcement, and the 2 sample enrolments
+        // (waiting for both so the printed view shows the region backfilled for the second one).
         Awaitility.await("catalog projection catch-up")
                   .atMost(Duration.ofSeconds(10))
                   .pollInterval(Duration.ofMillis(100))
                   .until(() -> {
                       CourseCatalogView v = queryView(configuration);
-                      logger.debug("Waiting for projection: courses={}, announcements={}, registeredStudents={}",
-                                   v.courses().size(), v.announcements().size(), v.registeredStudents());
+                      logger.debug("Waiting for projection: courses={}, enrolments={}, announcements={}, registeredStudents={}",
+                                   v.courses().size(), v.enrolments().size(), v.announcements().size(),
+                                   v.registeredStudents());
                       return v.courses().size() >= 6
+                              && v.enrolments().size() >= 2
                               && !v.announcements().isEmpty()
                               && v.registeredStudents() >= 4;
                   });
@@ -169,6 +182,13 @@ public class CourseCatalogApplication {
                   .append(" range=").append(course.range())
                   .append(" enrolments=").append(course.enrolments())
                   .append(course.registrationClosed() ? " [closed]" : "")
+                  .append('\n');
+        }
+        report.append("Enrolments (").append(view.enrolments().size()).append("):\n");
+        for (EnrolmentReadModel enrolment : view.enrolments()) {
+            report.append("  - ").append(enrolment.studentId().toString())
+                  .append(" in ").append(enrolment.courseId().toString())
+                  .append(" region=").append(enrolment.region())
                   .append('\n');
         }
         report.append("Announcements (").append(view.announcements().size()).append("):\n");

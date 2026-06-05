@@ -20,7 +20,7 @@ import org.axonframework.examples.demo.coursecatalog.catalog.CourseCatalogAxonTe
 import org.axonframework.examples.demo.coursecatalog.catalog.Ids;
 import org.axonframework.examples.demo.coursecatalog.catalog.events.CoursePublished;
 import org.axonframework.examples.demo.coursecatalog.catalog.events.StudentEnrolledInCourse;
-import org.axonframework.examples.demo.coursecatalog.catalog.transformations.RequestRegion;
+import org.axonframework.examples.demo.coursecatalog.shared.region.RequestRegion;
 import org.axonframework.examples.demo.coursecatalog.catalog.values.CapacityRange;
 import org.axonframework.examples.demo.coursecatalog.catalog.write.enrollstudent.EnrollStudent;
 import org.axonframework.examples.demo.coursecatalog.catalog.write.enrollstudent.EnrollStudentConfiguration;
