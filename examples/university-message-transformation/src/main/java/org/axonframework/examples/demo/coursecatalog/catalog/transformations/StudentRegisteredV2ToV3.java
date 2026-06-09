@@ -22,6 +22,7 @@ import tools.jackson.databind.node.ObjectNode;
 import io.axoniq.framework.messaging.transformation.events.EventTransformation;
 import io.axoniq.framework.messaging.transformation.events.EventTransformer;
 import org.axonframework.examples.demo.coursecatalog.catalog.CourseCatalogMessageNames;
+import org.axonframework.examples.demo.coursecatalog.shared.region.RequestRegion;
 import org.axonframework.messaging.core.MessageType;
 import org.axonframework.messaging.core.unitofwork.ProcessingContext;
 import org.jspecify.annotations.Nullable;

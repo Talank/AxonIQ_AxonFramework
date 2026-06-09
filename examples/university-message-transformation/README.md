@@ -42,13 +42,14 @@ org.axonframework.examples.demo.coursecatalog
 |  +- seed                            (legacy event seeder)
 |  +- transformations                 (chain composition + transformers)
 |  +- values                          (CapacityRange value object)
-|  +- write
+|  +- write                           (command slices + RequestRegionCommandInterceptor)
 |     +- publishcourse
 |     +- updatecoursecapacity
 |     +- enrollstudent
 +- shared
    +- ids                             (typed ids)
    +- notifier                        (NotificationService port + adapter)
+   +- region                          (RequestRegion processing-context resource)
 ```
 
 ## Running
@@ -109,8 +110,8 @@ comes back. Try this session:
 course-catalog> publish ai-101 "AI Fundamentals" 10 40
 [ok] published ai-101
 
-course-catalog> enroll ai-101 alice
-[ok] enrolled alice in ai-101
+course-catalog> enroll ai-101 alice EU
+[ok] enrolled alice in ai-101 (region EU)
 
 course-catalog> capacity ai-101 5 50
 [ok] capacity updated for ai-101
@@ -121,6 +122,9 @@ Courses (7):
   ...
   - Course:ai-101 "AI Fundamentals" range=CapacityRange[min=5, max=50] enrolments=1
   ...
+Enrolments (1):
+  - Student:alice in Course:ai-101 region=EU
+  ...
 
 course-catalog> exit
 ```
@@ -129,6 +133,15 @@ The placeholders in `help` (`<courseId>`, `<name>`, `<min>`, `<max>`,
 `<studentId>`) are values you choose: any string for `courseId` and `studentId`,
 the course name in double quotes if it contains spaces, integers for `min` and
 `max`. Type `exit`, `quit`, or press Ctrl+D to shut down cleanly.
+
+The optional `[region]` on `enroll` is how you watch the processing context at
+work. The seeded students `alice`, `bob`, `carol`, and `dave` were registered
+before the catalog had regions, so their stored `StudentRegistered` events carry
+none. Pass a region and a command interceptor lifts it onto the processing
+context; when the enrolment handler sources the student, the same context threads
+into the transformation chain and `StudentRegisteredV2ToV3` backfills it. The
+enrolment then carries that region into the view. Leave the region off and the
+enrolment falls back to `GLOBAL`.
 
 ## Testing
 

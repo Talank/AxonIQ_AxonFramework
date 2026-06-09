@@ -21,6 +21,7 @@ import org.axonframework.examples.demo.coursecatalog.catalog.automation.overbook
 import org.axonframework.examples.demo.coursecatalog.catalog.read.catalogview.CatalogViewConfiguration;
 import org.axonframework.examples.demo.coursecatalog.catalog.seed.LegacyEventSeedConfiguration;
 import org.axonframework.examples.demo.coursecatalog.catalog.transformations.CourseCatalogTransformations;
+import org.axonframework.examples.demo.coursecatalog.catalog.write.RequestRegionCommandInterceptor;
 import org.axonframework.examples.demo.coursecatalog.catalog.write.enrollstudent.EnrollStudentConfiguration;
 import org.axonframework.examples.demo.coursecatalog.catalog.write.publishcourse.PublishCourseConfiguration;
 import org.axonframework.examples.demo.coursecatalog.catalog.write.updatecoursecapacity.UpdateCourseCapacityConfiguration;
@@ -56,15 +57,20 @@ public final class CourseCatalogModuleConfiguration {
     }
 
     /**
-     * Registers the catalog's shared infrastructure (the transformation chain) without
-     * any slices.
+     * Registers the catalog's shared infrastructure without any slices: the read-path
+     * {@link EventTransformerChain} that lifts historic events to their current shape, and the
+     * write-edge {@link RequestRegionCommandInterceptor} that lifts the request region onto the
+     * processing context. Both are catalog-wide rather than tied to a single slice.
      *
      * @param configurer the configurer to extend
      * @return the configurer with shared infrastructure wired in
      */
     public static EventSourcingConfigurer configureSharedInfra(EventSourcingConfigurer configurer) {
-        return configurer.componentRegistry(registry -> registry
-                .registerComponent(EventTransformerChain.class,
-                                   config -> CourseCatalogTransformations.chain()));
+        return configurer
+                .componentRegistry(registry -> registry
+                        .registerComponent(EventTransformerChain.class,
+                                           config -> CourseCatalogTransformations.chain()))
+                .messaging(messaging -> messaging.registerCommandHandlerInterceptor(
+                        c -> new RequestRegionCommandInterceptor()));
     }
 }

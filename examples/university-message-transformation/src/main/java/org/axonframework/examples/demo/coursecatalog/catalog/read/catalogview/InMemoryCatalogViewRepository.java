@@ -19,7 +19,7 @@ package org.axonframework.examples.demo.coursecatalog.catalog.read.catalogview;
 import org.axonframework.examples.demo.coursecatalog.shared.ids.CourseId;
 import org.axonframework.examples.demo.coursecatalog.shared.ids.StudentId;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -36,13 +36,13 @@ import java.util.Set;
 class InMemoryCatalogViewRepository implements CatalogViewRepository {
 
     private final Map<CourseId, CatalogViewReadModel> courses = new LinkedHashMap<>();
-    private final Map<CourseId, Set<StudentId>> enrolments = new HashMap<>();
+    private final Map<CourseId, Map<StudentId, String>> enrolments = new LinkedHashMap<>();
     private final Set<String> announcements = new LinkedHashSet<>();
     private final Set<StudentId> registeredStudents = new HashSet<>();
 
     @Override
     public synchronized void saveCourse(CatalogViewReadModel course) {
-        int currentEnrolments = enrolments.getOrDefault(course.courseId(), Set.of()).size();
+        int currentEnrolments = enrolments.getOrDefault(course.courseId(), Map.of()).size();
         courses.put(course.courseId(), course.withEnrolments(currentEnrolments));
     }
 
@@ -62,9 +62,9 @@ class InMemoryCatalogViewRepository implements CatalogViewRepository {
     }
 
     @Override
-    public synchronized void recordEnrolment(CourseId courseId, StudentId studentId) {
-        Set<StudentId> enrolled = enrolments.computeIfAbsent(courseId, k -> new HashSet<>());
-        enrolled.add(studentId);
+    public synchronized void recordEnrolment(CourseId courseId, StudentId studentId, String region) {
+        Map<StudentId, String> enrolled = enrolments.computeIfAbsent(courseId, k -> new LinkedHashMap<>());
+        enrolled.put(studentId, region);
         CatalogViewReadModel row = courses.get(courseId);
         if (row != null) {
             courses.put(courseId, row.withEnrolments(enrolled.size()));
@@ -73,8 +73,12 @@ class InMemoryCatalogViewRepository implements CatalogViewRepository {
 
     @Override
     public synchronized CourseCatalogView snapshot() {
+        List<EnrolmentReadModel> enrolmentRows = new ArrayList<>();
+        enrolments.forEach((courseId, byStudent) -> byStudent.forEach(
+                (studentId, region) -> enrolmentRows.add(new EnrolmentReadModel(courseId, studentId, region))));
         return new CourseCatalogView(
                 List.copyOf(courses.values()),
+                List.copyOf(enrolmentRows),
                 List.copyOf(announcements),
                 registeredStudents.size()
         );

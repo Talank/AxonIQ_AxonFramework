@@ -18,7 +18,7 @@ package org.axonframework.examples.demo.coursecatalog.catalog.events;
 
 import org.axonframework.examples.demo.coursecatalog.catalog.CourseCatalogMessageNames;
 import org.axonframework.examples.demo.coursecatalog.catalog.CourseCatalogTags;
-import org.axonframework.examples.demo.coursecatalog.catalog.transformations.RequestRegion;
+import org.axonframework.examples.demo.coursecatalog.shared.region.RequestRegion;
 import org.axonframework.examples.demo.coursecatalog.shared.ids.CourseId;
 import org.axonframework.examples.demo.coursecatalog.shared.ids.StudentId;
 import org.axonframework.eventsourcing.annotation.EventTag;

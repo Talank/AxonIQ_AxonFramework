@@ -22,7 +22,7 @@ import org.axonframework.examples.demo.coursecatalog.catalog.events.CoursePublis
 import org.axonframework.examples.demo.coursecatalog.catalog.events.RegistrationClosed;
 import org.axonframework.examples.demo.coursecatalog.catalog.events.StudentEnrolledInCourse;
 import org.axonframework.examples.demo.coursecatalog.catalog.events.StudentRegistered;
-import org.axonframework.examples.demo.coursecatalog.catalog.transformations.RequestRegion;
+import org.axonframework.examples.demo.coursecatalog.shared.region.RequestRegion;
 import org.axonframework.examples.demo.coursecatalog.catalog.values.CapacityRange;
 import org.axonframework.eventsourcing.annotation.EventCriteriaBuilder;
 import org.axonframework.eventsourcing.annotation.EventSourcedEntity;

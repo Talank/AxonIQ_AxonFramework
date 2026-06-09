@@ -14,23 +14,24 @@
  * limitations under the License.
  */
 
-package org.axonframework.examples.demo.coursecatalog.catalog.transformations;
+package org.axonframework.examples.demo.coursecatalog.catalog.write;
 
+import org.axonframework.examples.demo.coursecatalog.shared.region.RequestRegion;
 import org.axonframework.messaging.commandhandling.CommandMessage;
 import org.axonframework.messaging.core.MessageHandlerInterceptor;
 import org.axonframework.messaging.core.MessageHandlerInterceptorChain;
 import org.axonframework.messaging.core.MessageStream;
 import org.axonframework.messaging.core.unitofwork.ProcessingContext;
-import org.jspecify.annotations.Nullable;
 
 /**
  * Lifts the request region from a command's {@link RequestRegion#METADATA_KEY metadata} onto
- * the active {@link ProcessingContext}, modelling the edge where region is attached once per
+ * the active {@link ProcessingContext}, modeling the edge where a region is attached once per
  * request from the caller's identity.
  * <p>
  * Because the resource is attached before the handler is invoked, it is in place by the time
  * the handler sources an entity and the transformation chain runs, so
- * {@link StudentRegisteredV2ToV3} can backfill the region of historic events. Commands that
+ * {@link org.axonframework.examples.demo.coursecatalog.catalog.transformations.StudentRegisteredV2ToV3}
+ * can backfill the region of historic events. Commands that
  * carry no region leave the context untouched, falling back to {@link RequestRegion#UNKNOWN_REGION}.
  */
 public final class RequestRegionCommandInterceptor implements MessageHandlerInterceptor<CommandMessage> {
@@ -39,7 +40,7 @@ public final class RequestRegionCommandInterceptor implements MessageHandlerInte
     public MessageStream<?> interceptOnHandle(CommandMessage message,
                                               ProcessingContext context,
                                               MessageHandlerInterceptorChain<CommandMessage> interceptorChain) {
-        @Nullable String region = message.metadata().get(RequestRegion.METADATA_KEY);
+        String region = message.metadata().get(RequestRegion.METADATA_KEY);
         if (region != null) {
             context.putResource(RequestRegion.RESOURCE_KEY, region);
         }
