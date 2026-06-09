@@ -58,7 +58,7 @@ class CatalogViewProjection {
 
     @EventHandler
     void on(StudentEnrolledInCourse event) {
-        repository.recordEnrolment(event.courseId(), event.studentId());
+        repository.recordEnrolment(event.courseId(), event.studentId(), event.region());
     }
 
     @EventHandler

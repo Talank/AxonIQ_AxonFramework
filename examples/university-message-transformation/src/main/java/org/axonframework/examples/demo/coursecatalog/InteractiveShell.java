@@ -19,7 +19,9 @@ package org.axonframework.examples.demo.coursecatalog;
 import org.axonframework.common.configuration.AxonConfiguration;
 import org.axonframework.examples.demo.coursecatalog.catalog.read.catalogview.CatalogViewReadModel;
 import org.axonframework.examples.demo.coursecatalog.catalog.read.catalogview.CourseCatalogView;
+import org.axonframework.examples.demo.coursecatalog.catalog.read.catalogview.EnrolmentReadModel;
 import org.axonframework.examples.demo.coursecatalog.catalog.read.catalogview.GetCourseCatalogView;
+import org.axonframework.examples.demo.coursecatalog.shared.region.RequestRegion;
 import org.axonframework.examples.demo.coursecatalog.catalog.read.catalogview.WelcomeMessageView;
 import org.axonframework.examples.demo.coursecatalog.catalog.values.CapacityRange;
 import org.axonframework.examples.demo.coursecatalog.catalog.write.enrollstudent.EnrollStudent;
@@ -28,6 +30,7 @@ import org.axonframework.examples.demo.coursecatalog.catalog.write.updatecoursec
 import org.axonframework.examples.demo.coursecatalog.shared.ids.CourseId;
 import org.axonframework.examples.demo.coursecatalog.shared.ids.StudentId;
 import org.axonframework.messaging.commandhandling.gateway.CommandGateway;
+import org.axonframework.messaging.core.Metadata;
 import org.axonframework.messaging.queryhandling.gateway.QueryGateway;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
@@ -162,9 +165,19 @@ final class InteractiveShell {
     }
 
     private void enroll(List<String> tokens) {
-        requireArgs(tokens, 3, "enroll <courseId> <studentId>");
-        commands.sendAndWait(new EnrollStudent(CourseId.of(tokens.get(1)), StudentId.of(tokens.get(2))));
-        print("[ok] enrolled " + tokens.get(2) + " in " + tokens.get(1));
+        requireArgs(tokens, 3, 4, "enroll <courseId> <studentId> [region]");
+        EnrollStudent command = new EnrollStudent(CourseId.of(tokens.get(1)), StudentId.of(tokens.get(2)));
+        if (tokens.size() == 4) {
+            // Carry the region as command metadata. The RequestRegionCommandInterceptor lifts it onto
+            // the ProcessingContext, which then threads into the transformation chain when the student
+            // entity is sourced, letting StudentRegisteredV2ToV3 backfill the region of a historic student.
+            String region = tokens.get(3);
+            commands.send(command, Metadata.with(RequestRegion.METADATA_KEY, region)).wait(Object.class);
+            print("[ok] enrolled " + tokens.get(2) + " in " + tokens.get(1) + " (region " + region + ")");
+        } else {
+            commands.sendAndWait(command);
+            print("[ok] enrolled " + tokens.get(2) + " in " + tokens.get(1));
+        }
     }
 
     private void welcome(List<String> tokens) {
@@ -198,7 +211,9 @@ final class InteractiveShell {
         print("Commands:");
         print("  publish  <courseId> \"<name>\" <min> <max>   Publish a new course");
         print("  capacity <courseId> <min> <max>             Update a course's capacity range");
-        print("  enroll   <courseId> <studentId>             Enroll a student in a course");
+        print("  enroll   <courseId> <studentId> [region]    Enroll a student; the optional region rides");
+        print("                                              along as metadata and is backfilled onto");
+        print("                                              historic students via the processing context");
         print("  view                                        Print the catalog view");
         print("  welcome  <studentId>                        Show a student's welcome message");
         print("  help                                        Show this message");
@@ -215,6 +230,12 @@ final class InteractiveShell {
                           + " range=" + course.range()
                           + " enrolments=" + course.enrolments()
                           + (course.registrationClosed() ? " [closed]" : ""));
+        }
+        print("Enrolments (" + view.enrolments().size() + "):");
+        for (EnrolmentReadModel enrolment : view.enrolments()) {
+            print("  - " + enrolment.studentId()
+                          + " in " + enrolment.courseId()
+                          + " region=" + enrolment.region());
         }
         print("Announcements (" + view.announcements().size() + "):");
         for (String announcement : view.announcements()) {
@@ -242,7 +263,11 @@ final class InteractiveShell {
     // ------------------------------------------------------------------------
 
     private static void requireArgs(List<String> tokens, int expected, String usage) {
-        if (tokens.size() != expected) {
+        requireArgs(tokens, expected, expected, usage);
+    }
+
+    private static void requireArgs(List<String> tokens, int min, int max, String usage) {
+        if (tokens.size() < min || tokens.size() > max) {
             throw new IllegalArgumentException("usage: " + usage);
         }
     }

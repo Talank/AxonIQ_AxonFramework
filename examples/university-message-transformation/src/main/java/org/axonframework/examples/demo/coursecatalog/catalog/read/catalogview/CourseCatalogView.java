@@ -24,12 +24,14 @@ import java.util.List;
  * query.
  *
  * @param courses             every published course, in registration order
+ * @param enrolments          every student-in-course enrolment, in arrival order
  * @param announcements       every system announcement, in arrival order
  * @param registeredStudents  total number of students registered in the catalog
  * @param welcomeMessages     every welcome message, lifted to the current shape by the chain
  */
 public record CourseCatalogView(
         List<CatalogViewReadModel> courses,
+        List<EnrolmentReadModel> enrolments,
         List<String> announcements,
         int registeredStudents,
         List<WelcomeMessageView> welcomeMessages

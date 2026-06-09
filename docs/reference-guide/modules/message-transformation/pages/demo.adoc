@@ -17,11 +17,11 @@ The demo composes five transformers into one chain, each illustrating a techniqu
 
 | `CoursePublishedV1ToV2`
 | a single `capacity` field becomes `minCapacity` and `maxCapacity`
-| a single xref:defining-transformations.adoc[structural transformation]
+| a single xref:defining-transformations.adoc[structural transformation] on an untyped `JsonNode`
 
 | `CoursePublishedV2ToV3`
-| a stored v1 event reaches handlers as v3 in two hops
-| xref:configuring-transformations.adoc#_why_ordering_matters[chaining in version order]
+| `minCapacity`/`maxCapacity` are wrapped into a `range`, producing the current `CoursePublished` event
+| a xref:defining-transformations.adoc#_mapping_to_a_typed_event[typed mapper] to the current event; with the previous transformer it shows xref:configuring-transformations.adoc#_why_ordering_matters[chaining in version order]
 
 | `StudentRegisteredV1ToV2`
 | separate `firstName` and `lastName` become a single `fullName`

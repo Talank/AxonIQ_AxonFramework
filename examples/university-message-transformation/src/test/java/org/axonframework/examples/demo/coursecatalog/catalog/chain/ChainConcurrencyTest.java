@@ -59,8 +59,8 @@ class ChainConcurrencyTest {
                                                          .when()
                                                          .then()
                                                          .output();
-                        JsonNode observed = Objects.requireNonNull(
-                                (JsonNode) output.payload(), "chain produced a null payload");
+                        JsonNode observed = JsonAssertions.toJsonTree(
+                                Objects.requireNonNull(output.payload(), "chain produced a null payload"));
                         firstObservedPayload.compareAndSet(null, observed);
                         if (!observed.equals(expectedV3)) {
                             throw new AssertionError("payload drifted under concurrency: " + observed);

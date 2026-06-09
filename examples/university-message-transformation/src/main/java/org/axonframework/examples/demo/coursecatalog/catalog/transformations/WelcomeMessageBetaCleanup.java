@@ -24,8 +24,6 @@ import io.axoniq.framework.messaging.transformation.events.EventTransformer;
 import org.axonframework.examples.demo.coursecatalog.catalog.CourseCatalogMessageNames;
 import org.axonframework.messaging.core.MessageType;
 import org.axonframework.messaging.core.QualifiedName;
-import org.axonframework.messaging.core.unitofwork.ProcessingContext;
-import org.jspecify.annotations.Nullable;
 
 import java.util.function.Predicate;
 
@@ -60,7 +58,7 @@ public final class WelcomeMessageBetaCleanup {
                                   .transform(JsonNode.class, WelcomeMessageBetaCleanup::map);
     }
 
-    private static JsonNode map(JsonNode beta, @Nullable ProcessingContext context) {
+    private static JsonNode map(JsonNode beta) {
         ObjectNode v1 = JsonNodeFactory.instance.objectNode();
         v1.set("studentId", beta.get("studentId"));
         v1.set("body",      beta.get("body"));
