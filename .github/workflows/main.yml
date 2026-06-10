@@ -1,18 +1,11 @@
 name: Axon Framework
 
 on:
-  push:
-    branches:
-      - main
-      - master
-      - 'axon-5.*.x'
-    paths-ignore:
-      - 'docs/**'
-
+  workflow_dispatch:
 jobs:
   build:
     name: Test and Build on JDK ${{ matrix.java-version }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -25,6 +18,10 @@ jobs:
             sonar-enabled: false
             deploy-enabled: false
 
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -40,20 +37,20 @@ jobs:
           server-password: MAVEN_PASSWORD
 
       - name: Regular Build
-        if: ${{ !matrix.sonar-enabled }}
+        if: always()
         run: |
           ./mvnw -B -U -ntp -Dstyle.color=always clean verify \
           -Possrh -Pintegration-test -Djacoco.skip=true -Dsurefire.rerunFailingTestsCount=5 -Dfailsafe.rerunFailingTestsCount=5 \
           -Dparallel=classes -DthreadCount=1 -DforkCount=2
       - name: Build with Coverage reports
-        if: matrix.sonar-enabled
+        if: always()
         run: |
           ./mvnw -B -U -ntp -Dstyle.color=always clean verify \
           -Dcoverage -Dsurefire.rerunFailingTestsCount=5 -Dfailsafe.rerunFailingTestsCount=5 \
           -Dparallel=classes -DthreadCount=1 -DforkCount=2
 
       - name: Sonar Analysis
-        if: matrix.sonar-enabled
+        if: always()
         run: |
           ./mvnw -B -ntp -Dstyle.color=always org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
           -Dsonar.projectKey=AxonIQ_AxonFramework \
@@ -64,7 +61,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy to Sonatype
-        if: success() && matrix.deploy-enabled
+        if: always()
         run: |
           ./mvnw -B -U -ntp -Dstyle.color=always -Possrh deploy -DskipTests=true
         env:
@@ -77,4 +74,4 @@ jobs:
         env:
           SLACK_CHANNEL: CAGSEC92A
           SLACK_COLOR: ${{ job.status }}
-          SLACK_TOKEN:  ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
